@@ -1,0 +1,12 @@
+        {{#users}} 
+        <tr> 
+            <td>{{edit button}}</td> 
+            <td>{{jobTitle}}</td> 
+            <td><a href="https://twitter.com/{{twitter}}">@{{twitter}}</a></td> 
+			<td>{{jobTitle}}</td> 
+			<td>{{jobTitle}}</td> 
+			<td>{{jobTitle}}</td> 
+			<td>{{delete button}}</td> 
+
+        </tr> 
+		{{/each}}

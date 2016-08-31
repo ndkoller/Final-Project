@@ -1,0 +1,233 @@
+      <form id="formsubmit" action="" method="post">
+        <fieldset>
+            <legend>Add a New Exercise or Update an Existing Row</legend>
+            <label>
+               Name:
+                <input type="text" required name="name_input" size="30" maxlength="100">
+            </label>
+            <br/>
+			<label>
+               Reps (Integer):
+                <input type="text" name="reps_input" size="30" maxlength="100">
+            </label>
+			 <br/>
+			<label>
+               Weight (Integer):
+                <input type="text" name="weight_input" size="30" maxlength="100">
+            </label>
+			 <br/>
+			<label>
+               Date (YEAR-MO-DA):
+                <input type="datetime" name="date_input" size="30" maxlength="100">
+            </label>
+			 <br/>
+			<label>
+               Check if weight is in lbs:
+                <input type="checkbox" name="unit_input" size="30" maxlength="100">
+            </label>
+			 <br/>
+        </fieldset>
+		<button id="submit" onclick="submitClick()">Submit</button>
+    </form>
+
+<table id="dataTable" style="border:1px solid black;">
+    <thead> 
+        <th>Update Button</th> 
+        <th>Exercise Name</th> 
+        <th>Reps</th> 
+        <th>Weight</th> 
+        <th>Date</th> 
+        <th>In lbs</th>
+        <th>Delete Button</th>  
+    </thead> 
+    <tbody id="dataBody"> 
+		{{#each results}}
+            <tr>
+				 <td><button id="edit" onclick="editRow('dataTable',this,{{this.id}})")>Update Row</button></td>
+                 <td id="tname">{{this.name}}</td>
+                 <td id="treps">{{this.reps}}</td>
+                 <td id="tweight">{{this.weight}}</td>
+                 <td id="tdate">{{this.date}}</td>
+                 <td id="tunit">{{this.lbs}}</td>
+				<td><button id="delete" onclick="deleteRow('dataTable',this,{{this.id}})">Delete Row</button></td>
+           </tr>
+      {{/each}}
+    </tbody> 
+</table> 
+<script>
+	function submitClick() {
+		
+		var req = new XMLHttpRequest();
+		var submission = {name:null, reps:null, weight:null, date:null, unit:null};
+		submission.name = document.getElementsByName("name_input")[0].value;
+		submission.reps = document.getElementsByName("reps_input")[0].value;
+		submission.weight = document.getElementsByName("weight_input")[0].value;
+		submission.date = document.getElementsByName("date_input")[0].value;
+		submission.unit = document.getElementsByName("unit_input")[0].checked;var fclr = document.getElementById("formsubmit");	
+		var test = JSON.stringify(submission);
+		
+		if(submission.name.length == 0){
+			alert("Name Field Cannot be empty");
+		} else{
+		
+		req.open("POST", '/insert', true);
+		req.setRequestHeader("Content-Type", "application/json");
+		
+		req.addEventListener('load',function(){
+			if(req.status >= 200 && req.status < 400){
+				var response = JSON.parse(req.responseText);
+				var length = (response.length - 1);
+				var mytablebody = document.getElementById("dataBody");
+				var mycurrent_row = document.createElement("tr");
+				var id = response[length].id;
+				<!-- edit button dom -->
+				var mycurrent_cell = document.createElement("td");
+				var editbutton = document.createElement("button");
+				editbutton.setAttribute("id", "edit" );
+				editbutton.onclick = function() {editRow('dataTable',this,id)};
+				editbutton.innerHTML = "Update Row";
+				mycurrent_cell.appendChild(editbutton);
+				mycurrent_row.appendChild(mycurrent_cell);
+				
+				<!-- name dom -->
+				mycurrent_cell = document.createElement("td");
+				mycurrent_cell.setAttribute("id","tname");
+				var currenttext = document.createTextNode(response[length].name);
+				mycurrent_cell.appendChild(currenttext);
+				mycurrent_row.appendChild(mycurrent_cell);
+				
+				<!-- reps dom -->
+				mycurrent_cell = document.createElement("td");								mycurrent_cell.setAttribute("id","treps");
+				currenttext = document.createTextNode(response[length].reps);
+				mycurrent_cell.appendChild(currenttext);
+				mycurrent_row.appendChild(mycurrent_cell);				
+				
+				<!-- weight dom -->
+				mycurrent_cell = document.createElement("td");								mycurrent_cell.setAttribute("id","tweight");
+				currenttext = document.createTextNode(response[length].weight);
+				mycurrent_cell.appendChild(currenttext);
+				mycurrent_row.appendChild(mycurrent_cell);
+				
+				<!-- date dom -->
+				mycurrent_cell = document.createElement("td");								mycurrent_cell.setAttribute("id","tdate");
+				currenttext = document.createTextNode(response[length].date);
+				mycurrent_cell.appendChild(currenttext);
+				mycurrent_row.appendChild(mycurrent_cell);
+				
+				<!-- unit dom -->
+				mycurrent_cell = document.createElement("td");
+				mycurrent_cell.setAttribute("id","tunit");
+				currenttext = document.createTextNode(response[length].lbs);
+				mycurrent_cell.appendChild(currenttext);
+				mycurrent_row.appendChild(mycurrent_cell);
+				
+				<!-- delete button dom -->
+				mycurrent_cell = document.createElement("td");
+				var deletebutton = document.createElement("button");
+				deletebutton.setAttribute("id", "delete" );
+				deletebutton.onclick = function() {deleteRow('dataTable',this,id)};
+				deletebutton.innerHTML = "Delete Row";
+				mycurrent_cell.appendChild(deletebutton);
+				mycurrent_row.appendChild(mycurrent_cell);
+				
+				<!-- adding to body & finish -->
+
+				mytablebody.appendChild(mycurrent_row);
+           
+		  } else {
+			console.log("Error in network request: " + request.statusText);
+		  }});
+		
+		console.log( test);
+		req.send(test); 
+		event.preventDefault();
+		}
+	}
+	
+	function deleteRow(tableID,currentRow,valueID) {
+		try {
+			var req = new XMLHttpRequest();
+			var submission = {id:null};
+			submission.id = valueID;
+			var table = document.getElementById(tableID);
+			var rowCount = table.rows.length;
+			for (var i = 0; i < rowCount; i++) {
+				var row = table.rows[i];
+				/*var chkbox = row.cells[0].childNodes[0];*/
+				/*if (null != chkbox && true == chkbox.checked)*/
+				
+				if (row==currentRow.parentNode.parentNode) {
+					if (rowCount <= 1) {
+						alert("Cannot delete all the rows.");
+						break;
+					}
+					table.deleteRow(i);
+					rowCount--;
+					i--;
+					req.open("POST", '/delete', true);
+					req.setRequestHeader("Content-Type", "application/json");
+					console.log(JSON.stringify(submission));
+					req.send(JSON.stringify(submission));
+				}
+			}
+		} catch (e) {
+			alert(e);
+		}
+		event.preventDefault();
+		//getValues();
+	}
+	
+	function editRow(tableID,currentRow,valueID) {
+		try {
+			var req = new XMLHttpRequest();
+			var submission = {id:null, name:null, reps:null, weight:null, date:null, unit:null};
+			submission.name = document.getElementsByName("name_input")[0].value;
+			submission.reps = document.getElementsByName("reps_input")[0].value;
+			submission.weight = document.getElementsByName("weight_input")[0].value;
+			submission.date = document.getElementsByName("date_input")[0].value;
+			submission.unit = document.getElementsByName("unit_input")[0].checked;	
+			
+		
+			submission.id = valueID;
+			var table = document.getElementById(tableID);
+			var rowCount = table.rows.length;
+			for (var i = 0; i < rowCount; i++) {
+				var row = table.rows[i];
+				/*var chkbox = row.cells[0].childNodes[0];*/
+				/*if (null != chkbox && true == chkbox.checked)*/
+				
+				if (row==currentRow.parentNode.parentNode) {
+					if (rowCount <= 1) {
+						alert("Cannot delete all the rows.");
+						break;
+					}
+					
+					req.open("POST", '/edit', true);
+					req.setRequestHeader("Content-Type", "application/json");
+					console.log(JSON.stringify(submission));
+					req.send(JSON.stringify(submission));
+					req.addEventListener('load', function()
+					{
+						if(req.status >= 200 & req.status < 400)
+						{
+							var response = JSON.parse(req.responseText);			
+							window.location.reload(true);
+						}
+						
+						else
+						{
+							console.log("Error in network request: " + req.statusText);
+						}
+			
+					});
+				}
+			}
+		} catch (e) {
+			alert(e);
+		}
+		event.preventDefault();
+		//getValues();
+	}
+	
+</script>
+	
